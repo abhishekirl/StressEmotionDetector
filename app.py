@@ -69,7 +69,7 @@ with open(os.path.join(BASE_DIR, 'label_encoder.pkl'), 'rb') as f:
     speech_le = pickle.load(f)
 
 # ─── Labels ────────────────────────────────────────────────────────────────────
-FACE_LABELS   = {0:'Angry',1:'Disgust',2:'Fear',3:'Happy',4:'Sad',5:'Surprise',6:'Neutral'}
+FACE_LABELS   = {0:'Angry',1:'Disgust',2:'Fear',3:'Happy',4:'Neutral',5:'Sad',6:'Surprise'}
 SPEECH_LABELS = {0:'angry',1:'calm',2:'disgust',3:'fear',4:'happy',5:'neutral',6:'sad',7:'surprise'}
 STRESS_EMOTIONS_FACE   = ['Angry','Fear','Disgust','Sad']
 STRESS_EMOTIONS_SPEECH = ['angry','fear','disgust','sad']
