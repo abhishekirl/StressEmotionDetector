@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stress Detection using Speech and Face</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #e8e0d5;
+            --card-bg: rgba(255,255,255,0.5);
+            --text: #2a2a2a;
+            --text-sub: #555;
+            --nav-bg: transparent;
+            --leaf: #4a6a4a;
+            --btn-border: #8a8a8a;
+            --blue: #3a6bc4;
+        }
+        [data-theme="dark"] {
+            --bg: #1a1a2e;
+            --card-bg: rgba(255,255,255,0.07);
+            --text: #f0ece6;
+            --text-sub: #aaa;
+            --nav-bg: transparent;
+            --leaf: #6a9a6a;
+            --btn-border: #aaa;
+            --blue: #6a9be4;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; transition: background 0.4s, color 0.3s; }
+        body {
+            font-family: 'Lato', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            color: var(--text);
+        }
+
+        /* ── Canvas particles ── */
+        #particles-canvas {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+            opacity: 0.4;
+        }
+
+        /* ── Navbar ── */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 18px 50px;
+            position: relative; z-index: 10;
+        }
+        .logo-circle {
+            width: 70px; height: 70px; border-radius: 50%;
+            border: 2px solid var(--leaf);
+            display: flex; align-items: center; justify-content: center;
+            background: var(--card-bg); font-size: 28px;
+            animation: spin-slow 20s linear infinite;
+        }
+        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .nav-right { display: flex; align-items: center; gap: 30px; }
+        .nav-links { display: flex; gap: 30px; }
+        .nav-links a {
+            text-decoration: none; color: var(--text);
+            font-size: 14px; letter-spacing: 0.5px;
+            transition: color 0.3s; position: relative;
+        }
+        .nav-links a::after {
+            content: ''; position: absolute; bottom: -2px; left: 0;
+            width: 0; height: 1.5px; background: var(--blue);
+            transition: width 0.3s;
+        }
+        .nav-links a:hover::after { width: 100%; }
+        .nav-links a:hover { color: var(--blue); }
+
+        /* Dark mode toggle */
+        .theme-toggle {
+            background: var(--card-bg);
+            border: 1.5px solid var(--btn-border);
+            border-radius: 20px; padding: 6px 14px;
+            cursor: pointer; font-size: 16px;
+            transition: all 0.3s; color: var(--text);
+        }
+        .theme-toggle:hover { background: var(--blue); color: white; border-color: var(--blue); }
+
+        /* ── Hero Section ── */
+        .hero {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            min-height: calc(100vh - 110px);
+            position: relative; z-index: 2;
+            padding: 20px;
+        }
+
+        .hero-badge {
+            background: var(--card-bg);
+            border: 1px solid rgba(58,107,196,0.3);
+            border-radius: 20px; padding: 6px 18px;
+            font-size: 12px; letter-spacing: 2px;
+            text-transform: uppercase; color: var(--blue);
+            margin-bottom: 30px;
+            animation: fadeInDown 0.8s ease both;
+        }
+
+        .title-box {
+            background: var(--blue);
+            padding: 18px 60px; border-radius: 4px;
+            margin-bottom: 8px;
+            animation: fadeInUp 0.8s ease 0.2s both;
+            box-shadow: 0 10px 40px rgba(58,107,196,0.3);
+        }
+        .title-box h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px; font-style: italic;
+            color: white; font-weight: 400;
+        }
+
+        .subtitle-box {
+            background: var(--blue);
+            padding: 10px 40px; border-radius: 4px;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.8s ease 0.3s both;
+            box-shadow: 0 10px 40px rgba(58,107,196,0.2);
+        }
+        .subtitle-box h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px; font-style: italic;
+            color: white; font-weight: 400;
+        }
+
+        .project-label {
+            font-size: 12px; letter-spacing: 3px;
+            color: var(--text-sub); text-transform: uppercase;
+            margin-bottom: 40px;
+            animation: fadeInUp 0.8s ease 0.4s both;
+        }
+
+        .hero-buttons {
+            display: flex; gap: 16px;
+            animation: fadeInUp 0.8s ease 0.5s both;
+        }
+
+        .btn-primary {
+            padding: 14px 40px;
+            background: var(--blue); color: white;
+            font-size: 14px; letter-spacing: 1px;
+            cursor: pointer; border: none;
+            border-radius: 4px; transition: all 0.3s;
+            font-family: 'Lato', sans-serif;
+            text-decoration: none; display: inline-block;
+            box-shadow: 0 4px 15px rgba(58,107,196,0.4);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(58,107,196,0.5); }
+
+        .btn-outline {
+            padding: 14px 40px;
+            border: 1.5px solid var(--btn-border);
+            background: transparent; color: var(--text);
+            font-size: 14px; letter-spacing: 1px;
+            cursor: pointer; border-radius: 4px;
+            transition: all 0.3s; font-family: 'Lato', sans-serif;
+            text-decoration: none; display: inline-block;
+        }
+        .btn-outline:hover { background: var(--text); color: var(--bg); }
+
+        /* ── Stats Row ── */
+        .stats-row {
+            display: flex; gap: 30px; margin-top: 60px;
+            animation: fadeInUp 0.8s ease 0.6s both;
+        }
+        .stat-item { text-align: center; }
+        .stat-item .num {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px; color: var(--blue); font-weight: 600;
+        }
+        .stat-item .lbl {
+            font-size: 11px; letter-spacing: 2px;
+            text-transform: uppercase; color: var(--text-sub);
+        }
+        .stat-divider { width: 1px; background: var(--btn-border); opacity: 0.4; }
+
+        /* ── Animations ── */
+        @keyframes fadeInDown { from { opacity:0; transform: translateY(-20px); } to { opacity:1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+
+        /* ── Leaves ── */
+        .leaves { position: fixed; bottom: 0; pointer-events: none; z-index: 1; }
+        .leaves-left { left: 0; }
+        .leaves-right { right: 0; }
+        .leaves svg { width: 320px; height: 400px; }
+    </style>
+</head>
+<body>
+    <canvas id="particles-canvas"></canvas>
+
+    <nav>
+        <div class="logo-circle">🪷</div>
+        <div class="nav-right">
+            <div class="nav-links">
+                
+                <a href="/about">About</a>
+                <a href="/accuracy">Accuracy Graph</a>
+                
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+        </div>
+    </nav>
+
+    <div class="hero">
+        
+        <div class="title-box"><h1>Project on</h1></div>
+        <div class="subtitle-box"><h2>Stress Detection using Speech and Face</h2></div>
+        <p class="project-label">Final Year Research Project</p>
+        <div class="hero-buttons">
+            <a href="/login" class="btn-primary"> Get Started</a>
+            <a href="/about" class="btn-outline">Learn More</a>
+        </div>
+        <div class="stats-row">
+            <div class="stat-item"><div class="num">7</div><div class="lbl">Face Emotions</div></div>
+            <div class="stat-divider"></div>
+            <div class="stat-item"><div class="num">8</div><div class="lbl">Speech Emotions</div></div>
+            <div class="stat-divider"></div>
+            <div class="stat-item"><div class="num">Real-time</div><div class="lbl">Detection</div></div>
+        </div>
+    </div>
+
+    <!-- Leaves -->
+    <div class="leaves leaves-left">
+        <svg viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg" fill="none">
+            <g stroke="var(--leaf)" stroke-width="1.5" opacity="0.6">
+                <path d="M50 400 Q80 300 120 200 Q150 120 180 60" stroke-width="2"/>
+                <ellipse cx="90" cy="320" rx="35" ry="12" transform="rotate(-30 90 320)" fill="var(--leaf)" fill-opacity="0.2"/>
+                <ellipse cx="110" cy="270" rx="38" ry="13" transform="rotate(-50 110 270)" fill="var(--leaf)" fill-opacity="0.2"/>
+                <ellipse cx="135" cy="220" rx="32" ry="11" transform="rotate(-20 135 220)" fill="var(--leaf)" fill-opacity="0.2"/>
+                <ellipse cx="70" cy="350" rx="28" ry="10" transform="rotate(-60 70 350)" fill="var(--leaf)" fill-opacity="0.2"/>
+                <ellipse cx="155" cy="170" rx="30" ry="10" transform="rotate(-40 155 170)" fill="var(--leaf)" fill-opacity="0.2"/>
+                <path d="M20 400 Q40 320 60 240 Q80 160 100 80" stroke-width="1.5"/>
+                <ellipse cx="45" cy="340" rx="30" ry="10" transform="rotate(-70 45 340)" fill="var(--leaf)" fill-opacity="0.15"/>
+                <ellipse cx="60" cy="280" rx="32" ry="11" transform="rotate(-45 60 280)" fill="var(--leaf)" fill-opacity="0.15"/>
+            </g>
+        </svg>
+    </div>
+    <div class="leaves leaves-right">
+        <svg viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg" fill="none">
+            <g stroke="var(--leaf)" stroke-width="1.5" opacity="0.6">
+                <path d="M250 400 Q220 300 180 200 Q150 120 120 60" stroke-width="2"/>
+                <ellipse cx="210" cy="320" rx="35" ry="12" transform="rotate(30 210 320)" fill="var(--leaf)" fill-opacity="0.2"/>
+                <ellipse cx="190" cy="270" rx="38" ry="13" transform="rotate(50 190 270)" fill="var(--leaf)" fill-opacity="0.2"/>
+                <ellipse cx="165" cy="220" rx="32" ry="11" transform="rotate(20 165 220)" fill="var(--leaf)" fill-opacity="0.2"/>
+                <ellipse cx="230" cy="350" rx="28" ry="10" transform="rotate(60 230 350)" fill="var(--leaf)" fill-opacity="0.2"/>
+                <path d="M280 400 Q260 320 240 240 Q220 160 200 80" stroke-width="1.5"/>
+                <ellipse cx="255" cy="340" rx="30" ry="10" transform="rotate(70 255 340)" fill="var(--leaf)" fill-opacity="0.15"/>
+                <ellipse cx="240" cy="280" rx="32" ry="11" transform="rotate(45 240 280)" fill="var(--leaf)" fill-opacity="0.15"/>
+            </g>
+        </svg>
+    </div>
+
+<script>
+    // ── Particles ──
+    const canvas = document.getElementById('particles-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resize();
+    window.addEventListener('resize', resize);
+
+    for (let i = 0; i < 60; i++) {
+        particles.push({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            r: Math.random() * 3 + 1,
+            dx: (Math.random() - 0.5) * 0.5,
+            dy: (Math.random() - 0.5) * 0.5,
+            alpha: Math.random() * 0.5 + 0.2
+        });
+    }
+
+    function animParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        particles.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = isDark
+                ? `rgba(106,155,228,${p.alpha})`
+                : `rgba(58,107,196,${p.alpha})`;
+            ctx.fill();
+            p.x += p.dx; p.y += p.dy;
+            if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+            if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+        });
+        requestAnimationFrame(animParticles);
+    }
+    animParticles();
+
+    // ── Theme Toggle ──
+    function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    }
+
+    // Load saved theme
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('themeBtn').textContent = '☀️';
+    }
+
+    // ── Animate stats count up ──
+    document.querySelectorAll('.stat-item .num').forEach(el => {
+        const txt = el.textContent;
+        const num = parseFloat(txt);
+        if (isNaN(num)) return;
+        let start = 0;
+        const end = num;
+        const suffix = txt.includes('%') ? '%' : '';
+        const step = end / 60;
+        const timer = setInterval(() => {
+            start += step;
+            if (start >= end) { el.textContent = end + suffix; clearInterval(timer); }
+            else el.textContent = Math.floor(start) + suffix;
+        }, 20);
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accuracy Graph - Stress Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #e8e0d5;
+            --card-bg: rgba(255,255,255,0.6);
+            --card-border: rgba(255,255,255,0.8);
+            --text: #2a2a3a;
+            --text2: #555;
+            --blue: #3a6bc4;
+            --nav-text: #3a3a3a;
+            --section-border: rgba(90,122,90,0.3);
+            --stat-val: #3a6bc4;
+        }
+        [data-theme="dark"] {
+            --bg: #1a1a2e;
+            --card-bg: rgba(255,255,255,0.07);
+            --card-border: rgba(255,255,255,0.12);
+            --text: #e8e0d5;
+            --text2: #aaa;
+            --blue: #6a9be4;
+            --nav-text: #ccc;
+            --section-border: rgba(100,160,100,0.3);
+            --stat-val: #6a9be4;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; transition: background 0.3s, color 0.3s; }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Navbar ── */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 18px 50px; background: transparent;
+        }
+        .logo-circle {
+            width: 64px; height: 64px; border-radius: 50%;
+            border: 2px solid #5a7a5a;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(245,240,234,0.8); font-size: 26px;
+        }
+        .nav-links { display: flex; gap: 36px; align-items: center; }
+        .nav-links a {
+            text-decoration: none; color: var(--nav-text);
+            font-size: 15px; transition: color 0.3s;
+        }
+        .nav-links a:hover { color: var(--blue); }
+        .theme-toggle {
+            width: 38px; height: 21px; border-radius: 11px;
+            background: var(--blue); border: none; cursor: pointer;
+            position: relative;
+        }
+        .theme-toggle::after {
+            content: ''; position: absolute;
+            width: 15px; height: 15px; border-radius: 50%;
+            background: white; top: 3px; left: 3px;
+            transition: transform 0.3s;
+        }
+        [data-theme="dark"] .theme-toggle::after { transform: translateX(17px); }
+
+        /* ── Content ── */
+        .content { max-width: 960px; margin: 0 auto; padding: 28px 20px 50px; }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            text-align: center; font-size: 32px;
+            color: var(--text); margin-bottom: 28px;
+            font-style: italic;
+        }
+
+        /* ── Stats Row ── */
+        .stats-row { display: flex; gap: 16px; margin-bottom: 28px; }
+        .stat-box {
+            flex: 1; background: var(--card-bg);
+            border-radius: 8px; padding: 20px;
+            text-align: center; border: 1px solid var(--card-border);
+            backdrop-filter: blur(8px);
+        }
+        .stat-box .val {
+            font-size: 32px; font-weight: 700; color: var(--stat-val);
+        }
+        .stat-box .lbl {
+            font-size: 12px; letter-spacing: 1px;
+            text-transform: uppercase; color: var(--text2); margin-top: 4px;
+        }
+
+        /* ── Section Titles ── */
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px; color: var(--text);
+            margin: 32px 0 14px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--section-border);
+        }
+
+        /* ── Chart Cards ── */
+        .chart-card {
+            background: var(--card-bg);
+            border-radius: 10px; padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(8px);
+        }
+        .chart-card h3 {
+            font-size: 15px; letter-spacing: 1px;
+            text-transform: uppercase; color: var(--text2);
+            margin-bottom: 16px; text-align: center;
+        }
+        .chart-card img {
+            width: 100%; border-radius: 6px; display: block;
+        }
+
+        /* ── Image Error Fallback ── */
+        .img-fallback {
+            width: 100%; min-height: 200px;
+            background: rgba(0,0,0,0.04);
+            border-radius: 6px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            color: var(--text2); font-size: 14px; gap: 8px;
+            border: 1px dashed var(--card-border);
+        }
+        .img-fallback span { font-size: 32px; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo-circle">🪷</div>
+        <div class="nav-links">
+            <a href="/">HOME</a>
+            
+            <button class="theme-toggle" onclick="toggleTheme()"></button>
+        </div>
+    </nav>
+
+    <div class="content">
+        <h1>Model Accuracy Graphs</h1>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-box">
+                <div class="val">60%</div>
+                <div class="lbl">Face Model Accuracy</div>
+            </div>
+            <div class="stat-box">
+                <div class="val">72%</div>
+                <div class="lbl">Speech Model Accuracy</div>
+            </div>
+            <div class="stat-box">
+                <div class="val">7</div>
+                <div class="lbl">Face Emotions</div>
+            </div>
+            <div class="stat-box">
+                <div class="val">8</div>
+                <div class="lbl">Speech Emotions</div>
+            </div>
+        </div>
+
+        <!-- ── Face Model Section ── -->
+        <div class="section-title">🖼️ Face Model</div>
+
+        <div class="chart-card">
+            <h3>Face Model — Training &amp; Validation Accuracy / Loss</h3>
+            <img src="{{ url_for('static', filename='face_training_curves.png') }}"
+                 alt="Face Training Curves"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+            <div class="img-fallback" style="display:none">
+                <span>📈</span>
+                <p>face_training_curves.png</p>
+                <small>Place this file in your <code>static/</code> folder</small>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3>Face Model — Confusion Matrix</h3>
+            <img src="{{ url_for('static', filename='face_confusion_matrix.png') }}"
+                 alt="Face Confusion Matrix"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+            <div class="img-fallback" style="display:none">
+                <span>🔢</span>
+                <p>face_confusion_matrix.png</p>
+                <small>Place this file in your <code>static/</code> folder</small>
+            </div>
+        </div>
+
+        <!-- ── Speech Model Section ── -->
+        <div class="section-title">🎙️ Speech Model</div>
+
+        <div class="chart-card">
+            <h3>Speech Model — Training &amp; Validation Accuracy / Loss</h3>
+            <img src="{{ url_for('static', filename='speech_training_curves.png') }}"
+                 alt="Speech Training Curves"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+            <div class="img-fallback" style="display:none">
+                <span>📈</span>
+                <p>speech_training_curves.png</p>
+                <small>Place this file in your <code>static/</code> folder</small>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3>Speech Model — Confusion Matrix</h3>
+            <img src="{{ url_for('static', filename='speech_confusion_matrix.png') }}"
+                 alt="Speech Confusion Matrix"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+            <div class="img-fallback" style="display:none">
+                <span>🔢</span>
+                <p>speech_confusion_matrix.png</p>
+                <small>Place this file in your <code>static/</code> folder</small>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    function toggleTheme() {
+        const curr = document.documentElement.getAttribute('data-theme');
+        const next = curr === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+    }
+</script>
+</body>
+</html>

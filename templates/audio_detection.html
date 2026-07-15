@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Detection - Stress Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --top-bg1:#b8d4eb; --top-bg2:#cde0f2; --top-bg3:#ddeaf7; --mid-bg:#ddeaf7; --bottom-bg:#eef3f8; --page-bg:#f5f5f5; --text:#1a1a2e; --text2:#444; --card-bg:rgba(200,220,240,0.5); --card-border:rgba(180,210,240,0.7); --nav-bg:rgba(200,220,240,0.3); --btn-dark:#2a2a3a; --btn-dark-hover:#3a3a5a; --info-bg:rgba(200,220,240,0.6); --info-border:rgba(180,210,240,0.8); --stress-bg:rgba(255,255,255,0.6); }
+        [data-theme="dark"] { --top-bg1:#0d1825; --top-bg2:#111e30; --top-bg3:#16263d; --mid-bg:#111e30; --bottom-bg:#0d1825; --page-bg:#1a1a2e; --text:#e8e0d5; --text2:#aaa; --card-bg:rgba(255,255,255,0.07); --card-border:rgba(255,255,255,0.12); --nav-bg:rgba(0,0,0,0.3); --btn-dark:#3a4a6a; --btn-dark-hover:#4a5a7a; --info-bg:rgba(255,255,255,0.06); --info-border:rgba(255,255,255,0.12); --stress-bg:rgba(255,255,255,0.07); }
+
+        * { margin:0; padding:0; box-sizing:border-box; transition:background 0.3s,color 0.3s; }
+        body { font-family:'Lato',sans-serif; min-height:100vh; background:var(--page-bg); display:flex; flex-direction:column; }
+
+        .nav-bar { display:flex; justify-content:space-between; align-items:center; padding:13px 30px; background:var(--nav-bg); border-bottom:1px solid var(--card-border); }
+        .nav-bar-left { display:flex; gap:20px; align-items:center; }
+        .nav-bar a { text-decoration:none; color:var(--text2); font-size:13px; transition:color 0.2s; }
+        .nav-bar a:hover { color:#3a6bc4; }
+        .step-indicator { font-size:13px; color:#3a6bc4; font-weight:600; background:rgba(58,107,196,0.1); padding:4px 12px; border-radius:12px; }
+        .theme-toggle { width:38px; height:21px; border-radius:11px; background:#3a6bc4; border:none; cursor:pointer; position:relative; }
+        .theme-toggle::after { content:''; position:absolute; width:15px; height:15px; border-radius:50%; background:white; top:3px; left:3px; transition:transform 0.3s; }
+        [data-theme="dark"] .theme-toggle::after { transform:translateX(17px); }
+
+        .top-section { padding:55px 20px 45px; text-align:center; background:linear-gradient(160deg, var(--top-bg1) 0%, var(--top-bg2) 50%, var(--top-bg3) 100%); }
+        .top-section h1 { font-size:40px; font-weight:300; color:var(--text); margin-bottom:10px; }
+        .top-section p { font-size:15px; color:var(--text2); font-style:italic; }
+
+        /* Face result preview banner */
+        .face-banner { background:rgba(39,174,96,0.1); border:1px solid rgba(39,174,96,0.3); border-radius:8px; padding:12px 20px; margin:16px auto; max-width:600px; display:flex; align-items:center; gap:16px; }
+        .face-banner .fb-icon { font-size:28px; }
+        .face-banner .fb-text { font-size:13px; color:var(--text); }
+        .face-banner .fb-text strong { display:block; font-size:15px; margin-bottom:2px; }
+        .face-banner-wrap { padding:0 20px; background:var(--bottom-bg); }
+
+        .controls-section { display:flex; flex-direction:column; align-items:center; padding:28px 20px; background:linear-gradient(160deg, var(--top-bg2) 0%, var(--top-bg3) 50%, var(--bottom-bg) 100%); }
+        .btn-record { padding:13px 44px; background:var(--btn-dark); color:white; font-size:15px; cursor:pointer; border:none; border-radius:4px; transition:all 0.3s; font-family:'Lato',sans-serif; display:flex; align-items:center; gap:10px; }
+        .btn-record:hover { background:var(--btn-dark-hover); }
+        .btn-record.recording { background:#c44; animation:pulse 1s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+        .waveform-section { padding:10px 0; background:linear-gradient(160deg, var(--top-bg2) 0%, var(--top-bg3) 100%); }
+        #waveformCanvas { width:100%; height:120px; display:block; }
+        .timer-display { font-size:28px; font-weight:300; color:#c44; text-align:center; padding:8px; display:none; }
+
+        .bottom-controls { display:flex; justify-content:center; gap:12px; padding:18px; background:linear-gradient(160deg, var(--top-bg3) 0%, var(--bottom-bg) 100%); }
+        .btn-secondary { padding:10px 28px; background:var(--btn-dark); color:white; font-size:14px; cursor:pointer; border:none; border-radius:4px; transition:all 0.3s; font-family:'Lato',sans-serif; }
+        .btn-secondary:hover { background:var(--btn-dark-hover); }
+        .btn-secondary.outline { background:transparent; border:1.5px solid var(--btn-dark); color:var(--text); }
+        .btn-secondary.outline:hover { background:var(--btn-dark); color:white; }
+
+        .info-wrap { padding:14px 20px; background:linear-gradient(160deg, var(--top-bg3) 0%, var(--bottom-bg) 100%); }
+        .info-box { background:var(--info-bg); border:1px solid var(--info-border); border-radius:8px; padding:14px 28px; text-align:center; margin:0 auto; max-width:500px; font-size:14px; color:var(--text2); position:relative; }
+        .info-box .close-btn { position:absolute; top:8px; right:12px; cursor:pointer; color:#888; font-size:16px; }
+
+        .btn-analyze { display:block; margin:18px auto; padding:13px 48px; background:rgba(58,107,196,0.85); color:white; font-size:15px; border:none; cursor:pointer; border-radius:4px; transition:all 0.3s; font-family:'Lato',sans-serif; }
+        .btn-analyze:hover { background:#3a6bc4; }
+        #loadingMsg { text-align:center; padding:18px; color:var(--text2); font-size:14px; display:none; background:var(--bottom-bg); }
+
+        /* ── Speech Results Section ── */
+        .speech-results { display:none; background:var(--page-bg); padding:30px 20px 20px; }
+        .results-inner { max-width:1000px; margin:0 auto; display:flex; gap:24px; align-items:flex-start; }
+
+        /* Left — Current Mood Panel */
+        .mood-panel {
+            width:280px; flex-shrink:0;
+            background:var(--card-bg); border:1px solid var(--card-border);
+            border-radius:10px; padding:22px; backdrop-filter:blur(10px);
+        }
+        .mood-panel .panel-title { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text2); margin-bottom:16px; }
+        .current-mood-box { text-align:center; padding:18px; background:rgba(58,107,196,0.08); border-radius:8px; margin-bottom:16px; }
+        .current-mood-box .mood-emoji { font-size:48px; display:block; margin-bottom:8px; }
+        .current-mood-box .mood-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text2); margin-bottom:4px; }
+        .current-mood-box .mood-name { font-family:'Playfair Display',serif; font-size:26px; color:#3a6bc4; font-weight:600; }
+
+        /* Stress meter */
+        .speech-stress-meter { padding:14px; border-radius:8px; text-align:center; border:2px solid var(--card-border); margin-bottom:16px; transition:border-color 0.3s; }
+        .speech-stress-meter .sm-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text2); margin-bottom:4px; }
+        .speech-stress-meter .sm-val { font-family:'Playfair Display',serif; font-size:20px; font-weight:600; }
+        .speech-stress-meter .sm-score { font-size:12px; color:var(--text2); margin-top:2px; }
+        .sm-bar-track { height:6px; background:rgba(0,0,0,0.08); border-radius:3px; margin-top:10px; overflow:hidden; }
+        .sm-bar-fill { height:100%; border-radius:3px; background:#3a6bc4; transition:width 0.8s ease; }
+
+        /* Right — Emotion Bars Panel */
+        .bars-panel {
+            flex:1;
+            background:var(--card-bg); border:1px solid var(--card-border);
+            border-radius:10px; padding:22px; backdrop-filter:blur(10px);
+        }
+        .bars-panel .panel-title { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text2); margin-bottom:16px; }
+        .emo-bar-item { margin-bottom:12px; }
+        .ebo-header { display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--text); margin-bottom:4px; }
+        .ebo-track { height:8px; background:rgba(0,0,0,0.08); border-radius:4px; overflow:hidden; }
+        .ebo-fill { height:100%; border-radius:4px; transition:width 0.8s ease; }
+        .ebo-fill.stress  { background:#e05a4e; }
+        .ebo-fill.calm    { background:#27ae60; }
+        .ebo-fill.neutral { background:#3a6bc4; }
+
+        /* Bottom CTA */
+        .result-cta { text-align:center; padding:20px; background:var(--page-bg); }
+        .btn-combined { padding:14px 50px; background:#3a6bc4; color:white; font-size:15px; border:none; cursor:pointer; border-radius:6px; font-family:'Lato',sans-serif; transition:all 0.3s; display:inline-flex; align-items:center; gap:10px; box-shadow:0 4px 15px rgba(58,107,196,0.4); }
+        .btn-combined:hover { background:#2a5ab4; transform:translateY(-2px); }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <div class="nav-bar-left">
+            <a href="/face">← Back to Face Detection</a>
+            <span class="step-indicator">Step 2 of 2 — Speech Detection</span>
+        </div>
+        <div class="nav-bar-left">
+            <a href="/home">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/accuracy">Accuracy</a>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()"></button>
+    </div>
+
+    <!-- Face result banner -->
+    <div class="face-banner-wrap" id="faceBannerWrap" style="display:none">
+        <div class="face-banner">
+            <span class="fb-icon" id="fbIcon">😐</span>
+            <div class="fb-text">
+                <strong>✅ Face Detection Complete</strong>
+                Face Stress: <span id="fbStress">—</span> | Dominant Emotion: <span id="fbEmotion">—</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="top-section">
+        <h1>Speech Emotion Detection</h1>
+        <p>Step 2: Record your voice — then get the stress result!</p>
+    </div>
+
+    <div class="controls-section">
+        <button class="btn-record" id="btnRecord" onclick="toggleRecording()">
+            <span id="recordIcon">🎤</span>
+            <span id="recordText">Start Recording</span>
+        </button>
+        <div class="timer-display" id="timerDisplay">15</div>
+    </div>
+
+    <div class="waveform-section">
+        <canvas id="waveformCanvas"></canvas>
+    </div>
+
+    <div class="bottom-controls">
+        <button class="btn-secondary" onclick="playPause()">▶ Play / Pause</button>
+        <button class="btn-secondary outline" onclick="resetRecording()">↺ Reset</button>
+    </div>
+
+    <div class="info-wrap">
+        <div class="info-box" id="infoBox">
+            <span class="close-btn" onclick="this.parentElement.style.display='none'">✕</span>
+            Record for <strong>15 seconds</strong>, then click Analyze to see your <strong>speech stress result!</strong>
+        </div>
+    </div>
+
+    <button class="btn-analyze" id="btnAnalyze" onclick="analyzeAudio()">🔍 Analyze Speech</button>
+    <div id="loadingMsg">🔄 Analyzing your speech... please wait</div>
+
+    <!-- Speech Results Section -->
+    <div class="speech-results" id="speechResults">
+        <div class="results-inner">
+            <div class="mood-panel">
+                <div class="panel-title">Speech Analysis Result</div>
+                <div class="current-mood-box">
+                    <span class="mood-emoji" id="moodEmoji">😐</span>
+                    <div class="mood-label">Current Mood</div>
+                    <div class="mood-name" id="moodName">—</div>
+                </div>
+                <div class="speech-stress-meter" id="speechStressMeter">
+                    <div class="sm-label">Speech Stress Level</div>
+                    <div class="sm-val" id="smVal">—</div>
+                    <div class="sm-score" id="smScore">Score: —</div>
+                    <div class="sm-bar-track">
+                        <div class="sm-bar-fill" id="smBarFill" style="width:0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="bars-panel">
+                <div class="panel-title">📊 Emotion Percentage Distribution</div>
+                <div id="speechEmoBars"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="result-cta" id="resultCta" style="display:none">
+        <button class="btn-combined" onclick="goToResult()">
+             See Combined Result (Face + Speech) →
+        </button>
+    </div>
+
+<script>
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    function toggleTheme() {
+        const curr = document.documentElement.getAttribute('data-theme');
+        const next = curr === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+    }
+
+    // Show face banner if face data exists
+    const faceResult = JSON.parse(sessionStorage.getItem('faceResult') || 'null');
+    const EMOJI_MAP = { Angry:'😠', Disgust:'🤢', Fear:'😨', Happy:'😊', Sad:'😢', Surprise:'😲', Neutral:'😐' };
+    if (faceResult) {
+        document.getElementById('faceBannerWrap').style.display = 'block';
+        document.getElementById('fbIcon').textContent = faceResult.stress_emoji || '😐';
+        document.getElementById('fbStress').textContent = `${faceResult.stress_level} (${faceResult.stress_score}%)`;
+        document.getElementById('fbEmotion').textContent = faceResult.dominant_emotion || '—';
+    }
+
+    let mediaRecorder = null, audioChunks = [], isRecording = false;
+    let timerInterval = null, timeLeft = 15;
+    let audioBlob = null, audioContext = null;
+    let analyser = null, waveformAnim = null, recordedAudio = null;
+
+    const canvas = document.getElementById('waveformCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function drawFlatWave() {
+        canvas.width = canvas.offsetWidth;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#4a8ac4'; ctx.lineWidth = 2; ctx.beginPath();
+        const mid = canvas.height / 2;
+        ctx.moveTo(0, mid);
+        for (let x = 0; x < canvas.width; x += 8)
+            ctx.lineTo(x, mid + Math.sin(x * 0.05) * 4);
+        ctx.stroke();
+    }
+
+    function drawLiveWave() {
+        if (!analyser) return;
+        const bufLen = analyser.fftSize;
+        const dataArr = new Uint8Array(bufLen);
+        analyser.getByteTimeDomainData(dataArr);
+        canvas.width = canvas.offsetWidth;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#1a5fa0'; ctx.lineWidth = 2; ctx.beginPath();
+        const sliceW = canvas.width / bufLen; let x = 0;
+        for (let i = 0; i < bufLen; i++) {
+            const y = (dataArr[i] / 128.0) * (canvas.height / 2);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            x += sliceW;
+        }
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.stroke();
+        waveformAnim = requestAnimationFrame(drawLiveWave);
+    }
+
+    async function toggleRecording() { isRecording ? stopRecording() : await startRecording(); }
+
+    async function startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioContext = new AudioContext();
+            analyser = audioContext.createAnalyser();
+            const src = audioContext.createMediaStreamSource(stream);
+            src.connect(analyser);
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                recordedAudio = new Audio(URL.createObjectURL(audioBlob));
+                cancelAnimationFrame(waveformAnim); drawFlatWave();
+            };
+            mediaRecorder.start(); isRecording = true;
+            document.getElementById('btnRecord').classList.add('recording');
+            document.getElementById('recordIcon').textContent = '⏹';
+            document.getElementById('recordText').textContent = 'Stop Recording';
+            timeLeft = 15;
+            const timerEl = document.getElementById('timerDisplay');
+            timerEl.style.display = 'block'; timerEl.textContent = timeLeft;
+            timerInterval = setInterval(() => {
+                timeLeft--; timerEl.textContent = timeLeft;
+                if (timeLeft <= 0) stopRecording();
+            }, 1000);
+            drawLiveWave();
+        } catch(e) { alert('Microphone access denied: ' + e.message); }
+    }
+
+    function stopRecording() {
+        if (!isRecording) return;
+        isRecording = false; clearInterval(timerInterval);
+        mediaRecorder.stop();
+        document.getElementById('timerDisplay').style.display = 'none';
+        document.getElementById('btnRecord').classList.remove('recording');
+        document.getElementById('recordIcon').textContent = '🎤';
+        document.getElementById('recordText').textContent = 'Start Recording';
+        cancelAnimationFrame(waveformAnim);
+    }
+
+    function playPause() {
+        if (recordedAudio) recordedAudio.paused ? recordedAudio.play() : recordedAudio.pause();
+    }
+
+    function resetRecording() {
+        stopRecording(); audioBlob = null; recordedAudio = null; audioChunks = [];
+        drawFlatWave();
+    }
+
+    const SPEECH_EMOTIONS = [
+        { key:'neutral', emoji:'😐', label:'Neutral',  colorClass:'neutral' },
+        { key:'calm',    emoji:'😌', label:'Calm',     colorClass:'calm'    },
+        { key:'happy',   emoji:'😊', label:'Happy',    colorClass:'calm'    },
+        { key:'sad',     emoji:'😢', label:'Sad',      colorClass:'stress'  },
+        { key:'angry',   emoji:'😠', label:'Angry',    colorClass:'stress'  },
+        { key:'fear',    emoji:'😨', label:'Fear',     colorClass:'stress'  },
+        { key:'disgust', emoji:'🤢', label:'Disgust',  colorClass:'stress'  },
+        { key:'surprise',emoji:'😲', label:'Surprise', colorClass:'neutral' }
+    ];
+
+    async function analyzeAudio() {
+        if (!audioBlob) { alert('First record audio'); return; }
+        document.getElementById('loadingMsg').style.display = 'block';
+        document.getElementById('btnAnalyze').disabled = true;
+
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.wav');
+
+        try {
+            const res = await fetch('/api/analyze_audio', { method: 'POST', body: formData });
+            const data = await res.json();
+            document.getElementById('loadingMsg').style.display = 'none';
+            document.getElementById('btnAnalyze').disabled = false;
+            if (data.error) { alert('Error: ' + data.error); return; }
+
+            // Save to sessionStorage for result page
+            sessionStorage.setItem('speechResult', JSON.stringify({
+                stress_score: data.stress_score,
+                stress_level: data.stress_level,
+                stress_color: data.stress_color,
+                stress_emoji: data.stress_emoji,
+                dominant_emotion: data.dominant_emotion,
+                emotion_percentages: data.emotion_percentages
+            }));
+
+            // Show results on THIS page
+            showSpeechResults(data);
+
+        } catch(e) {
+            document.getElementById('loadingMsg').style.display = 'none';
+            document.getElementById('btnAnalyze').disabled = false;
+            alert('Error: ' + e.message);
+        }
+    }
+
+    function showSpeechResults(data) {
+        const pcts = data.emotion_percentages || {};
+        const dominant = data.dominant_emotion;
+
+        // Dominant mood
+        const domInfo = SPEECH_EMOTIONS.find(e => e.key === dominant) || { emoji:'😐', label: dominant };
+        document.getElementById('moodEmoji').textContent = domInfo.emoji;
+        document.getElementById('moodName').textContent  = domInfo.label.charAt(0).toUpperCase() + domInfo.label.slice(1);
+
+        // Stress meter
+        const meter = document.getElementById('speechStressMeter');
+        meter.style.borderColor = data.stress_color;
+        document.getElementById('smVal').textContent   = data.stress_emoji + ' ' + data.stress_level;
+        document.getElementById('smVal').style.color   = data.stress_color;
+        document.getElementById('smScore').textContent = 'Score: ' + data.stress_score + '%';
+        document.getElementById('smBarFill').style.width      = data.stress_score + '%';
+        document.getElementById('smBarFill').style.background = data.stress_color;
+
+        // Emotion bars
+        const barsEl = document.getElementById('speechEmoBars');
+        barsEl.innerHTML = '';
+        SPEECH_EMOTIONS.forEach(({ key, emoji, label, colorClass }) => {
+            const val = (pcts[key] || 0).toFixed(1);
+            const isDominant = key === dominant;
+            barsEl.innerHTML += `
+                <div class="emo-bar-item">
+                    <div class="ebo-header">
+                        <span>${emoji} ${label}${isDominant ? ' <strong style="color:#3a6bc4">(Dominant)</strong>' : ''}</span>
+                        <span style="font-weight:${isDominant?'700':'400'}">${val}%</span>
+                    </div>
+                    <div class="ebo-track">
+                        <div class="ebo-fill ${colorClass}" style="width:${val}%"></div>
+                    </div>
+                </div>`;
+        });
+
+        // Show results section
+        document.getElementById('speechResults').style.display = 'block';
+        document.getElementById('resultCta').style.display = 'block';
+
+        // Scroll to results
+        document.getElementById('speechResults').scrollIntoView({ behavior:'smooth' });
+
+        // Change analyze button text
+        document.getElementById('btnAnalyze').textContent = '🔄 Re-analyze';
+    }
+
+    function goToResult() {
+        window.location.href = '/result';
+    }
+
+    window.onload = () => drawFlatWave();
+    window.onresize = () => drawFlatWave();
+</script>
+</body>
+</html>

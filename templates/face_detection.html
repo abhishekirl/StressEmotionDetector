@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Stress Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f0ece6;
+            --nav-bg: #f0ece6;
+            --card-bg: rgba(255,255,255,0.55);
+            --text: #3a3a3a;
+            --text2: #666;
+            --border: #ddd;
+            --blue: #3a6bc4;
+            --bar-bg: #e0ddd8;
+        }
+        [data-theme="dark"] {
+            --bg: #1a1a2e;
+            --nav-bg: #12122a;
+            --card-bg: rgba(255,255,255,0.07);
+            --text: #e8e0d5;
+            --text2: #aaa;
+            --border: rgba(255,255,255,0.15);
+            --blue: #6a9be4;
+            --bar-bg: rgba(255,255,255,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; transition: background 0.3s, color 0.3s; }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Navbar ── */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 40px;
+            background: var(--nav-bg);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-left { display: flex; align-items: center; gap: 14px; }
+        .nav-left .brand {
+            font-size: 19px; font-weight: 700;
+            color: var(--blue); text-decoration: none;
+        }
+        .nav-left .sub-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 14px; color: var(--text2); font-style: italic;
+        }
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 21px; color: var(--blue);
+            letter-spacing: 1px; text-align: center;
+            flex: 1; font-style: italic;
+        }
+        .nav-right { display: flex; gap: 16px; align-items: center; }
+        .nav-right a {
+            text-decoration: none; color: var(--text2);
+            font-size: 14px; transition: color 0.2s;
+        }
+        .nav-right a:hover { color: var(--blue); }
+
+        .theme-toggle {
+            width: 38px; height: 21px; border-radius: 11px;
+            background: var(--blue); border: none; cursor: pointer;
+            position: relative; flex-shrink: 0;
+        }
+        .theme-toggle::after {
+            content: ''; position: absolute;
+            width: 15px; height: 15px; border-radius: 50%;
+            background: white; top: 3px; left: 3px;
+            transition: transform 0.3s;
+        }
+        [data-theme="dark"] .theme-toggle::after { transform: translateX(17px); }
+
+        /* ── Main Layout ── */
+        .main-content {
+            display: flex; flex-direction: column;
+            align-items: center; padding: 20px 40px;
+        }
+
+        .top-row {
+            display: flex; justify-content: space-between; align-items: center;
+            width: 100%; max-width: 1100px; margin-bottom: 14px;
+        }
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 17px; color: var(--text2); font-style: italic;
+        }
+        .btn-move {
+            padding: 9px 24px;
+            border: 1.5px solid #8a8a8a;
+            background: transparent; color: var(--text);
+            font-size: 13px; cursor: pointer; border-radius: 2px;
+            transition: all 0.3s; font-family: 'Lato', sans-serif;
+            text-decoration: none; display: inline-block;
+        }
+        .btn-move:hover { background: var(--blue); color: white; border-color: var(--blue); }
+
+        /* ── Video Section ── */
+        .video-section {
+            display: flex; gap: 28px;
+            width: 100%; max-width: 1100px; align-items: flex-start;
+        }
+        .video-col { flex-shrink: 0; }
+
+        .video-wrapper {
+            position: relative;
+            width: 620px; height: 465px;
+            background: #000; border-radius: 6px; overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        #videoElement { width: 100%; height: 100%; object-fit: cover; }
+        #overlayCanvas {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%; pointer-events: none;
+        }
+
+        .controls { display: flex; gap: 10px; margin-top: 12px; }
+        .btn-ctrl {
+            padding: 9px 24px;
+            border: 1.5px solid #8a8a8a;
+            background: transparent; color: var(--text);
+            font-size: 13px; cursor: pointer; border-radius: 2px;
+            transition: all 0.3s; font-family: 'Lato', sans-serif;
+        }
+        .btn-ctrl:hover, .btn-ctrl.active {
+            background: var(--blue); color: white; border-color: var(--blue);
+        }
+        .btn-ctrl.stop:hover { background: #c44; border-color: #c44; }
+
+        /* ── Stats Panel ── */
+        .stats-panel {
+            flex: 1; background: var(--card-bg);
+            border-radius: 8px; padding: 20px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+
+        .current-emotion {
+            text-align: center; padding: 16px;
+            background: rgba(58,107,196,0.1);
+            border-radius: 6px; margin-bottom: 18px;
+        }
+        .current-emotion .label {
+            font-size: 11px; letter-spacing: 2px;
+            text-transform: uppercase; color: var(--text2); margin-bottom: 6px;
+        }
+        .current-emotion .emotion-emoji { font-size: 30px; display: block; margin-bottom: 4px; }
+        .current-emotion .emotion-val {
+            font-family: 'Playfair Display', serif;
+            font-size: 26px; color: var(--blue); font-weight: 600;
+        }
+
+        .stress-meter {
+            padding: 14px; border-radius: 6px; text-align: center;
+            margin-bottom: 18px; border: 1px solid var(--border);
+            transition: border-color 0.3s;
+        }
+        .stress-meter .stress-label {
+            font-size: 11px; letter-spacing: 2px;
+            text-transform: uppercase; color: var(--text2); margin-bottom: 4px;
+        }
+        .stress-meter .stress-val {
+            font-family: 'Playfair Display', serif;
+            font-size: 21px; font-weight: 600;
+        }
+        .stress-meter .stress-pct { font-size: 13px; color: var(--text2); margin-top: 2px; }
+        .stress-bar-track {
+            height: 6px; background: var(--bar-bg);
+            border-radius: 3px; margin-top: 10px; overflow: hidden;
+        }
+        .stress-bar-fill {
+            height: 100%; border-radius: 3px;
+            background: var(--blue); transition: width 0.5s ease;
+        }
+
+        .emotion-bars h4 {
+            font-size: 11px; letter-spacing: 2px;
+            text-transform: uppercase; color: var(--text2); margin-bottom: 12px;
+        }
+        .bar-item { margin-bottom: 10px; }
+        .bar-item .bar-header {
+            display: flex; justify-content: space-between;
+            font-size: 12px; color: var(--text); margin-bottom: 3px;
+        }
+        .bar-track {
+            height: 5px; background: var(--bar-bg);
+            border-radius: 3px; overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%; background: var(--blue);
+            border-radius: 3px; transition: width 0.5s ease;
+        }
+        .bar-fill.stress { background: #e05a4e; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-left">
+            <a href="/" class="brand">StressDetect</a>
+            <span class="sub-title">Face Emotion</span>
+        </div>
+       
+        <div class="nav-right">
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/accuracy">Accuracy</a>
+            <button class="theme-toggle" onclick="toggleTheme()"></button>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="top-row">
+            <span class="section-title">Facial Emotion Detector</span>
+            <a href="#" class="btn-move" onclick="saveAndMoveToAudio(); return false;">Move to Audio Detection →</a>
+        </div>
+
+        <div class="video-section">
+            <div class="video-col">
+                <div class="video-wrapper">
+                    <video id="videoElement" autoplay playsinline muted></video>
+                    <canvas id="overlayCanvas"></canvas>
+                </div>
+                <div class="controls">
+                    <button class="btn-ctrl active" id="btnStart" onclick="startCamera()">▶ Start</button>
+                    <button class="btn-ctrl stop" id="btnStop" onclick="stopCamera()">⏹ Stop</button>
+                    <button class="btn-ctrl" onclick="resetStats()">↺ Reset</button>
+                    <button class="btn-ctrl" id="btnSaveProceed" onclick="saveFaceAndProceed()" style="display:none; background:var(--blue); color:white; border-color:var(--blue);">✅ Save & Go to Audio →</button>
+                </div>
+            </div>
+
+            <div class="stats-panel">
+                <div class="current-emotion">
+                    <span class="emotion-emoji" id="currentEmoji">—</span>
+                    <div class="label">Current Emotion</div>
+                    <div class="emotion-val" id="currentEmotion">Detecting...</div>
+                </div>
+
+                <div class="stress-meter" id="stressMeter">
+                    <div class="stress-label">Stress Level</div>
+                    <div class="stress-val" id="stressLevel">—</div>
+                    <div class="stress-pct" id="stressPct">Analyzing...</div>
+                    <div class="stress-bar-track">
+                        <div class="stress-bar-fill" id="stressBarFill" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <div class="emotion-bars">
+                    <h4>Emotion Distribution</h4>
+                    <div id="emotionBars"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    function toggleTheme() {
+        const curr = document.documentElement.getAttribute('data-theme');
+        const next = curr === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+    }
+
+    const EMOTIONS = ['Angry','Disgust','Fear','Happy','Sad','Surprise','Neutral'];
+    const STRESS_EMOTIONS = ['Angry','Fear','Disgust','Sad'];
+    const EMOJI_MAP = { Angry:'😠', Disgust:'🤢', Fear:'😨', Happy:'😊', Sad:'😢', Surprise:'😲', Neutral:'😐' };
+    let stream = null, detecting = false, intervalId = null, lastFaceData = null;
+
+    const barsContainer = document.getElementById('emotionBars');
+    EMOTIONS.forEach(e => {
+        const isStress = STRESS_EMOTIONS.includes(e);
+        barsContainer.innerHTML += `
+            <div class="bar-item">
+                <div class="bar-header">
+                    <span>${EMOJI_MAP[e]} ${e}</span>
+                    <span id="pct_${e}">0.0%</span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill ${isStress ? 'stress' : ''}" id="bar_${e}" style="width:0%"></div>
+                </div>
+            </div>`;
+    });
+
+    async function startCamera() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            document.getElementById('videoElement').srcObject = stream;
+            detecting = true;
+            intervalId = setInterval(captureAndAnalyze, 500);
+            document.getElementById('btnStart').classList.add('active');
+        } catch(e) { alert('Camera access denied: ' + e.message); }
+    }
+
+    function stopCamera() {
+        detecting = false; clearInterval(intervalId);
+        if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+        document.getElementById('currentEmotion').textContent = '—';
+        document.getElementById('currentEmoji').textContent = '—';
+        document.getElementById('btnStart').classList.remove('active');
+    }
+
+    function resetStats() {
+        fetch('/api/reset_face', { method: 'POST' });
+        EMOTIONS.forEach(e => {
+            document.getElementById(`pct_${e}`).textContent = '0.0%';
+            document.getElementById(`bar_${e}`).style.width = '0%';
+        });
+        document.getElementById('currentEmotion').textContent = 'Detecting...';
+        document.getElementById('currentEmoji').textContent = '—';
+        document.getElementById('stressLevel').textContent = '—';
+        document.getElementById('stressPct').textContent = 'Analyzing...';
+        document.getElementById('stressBarFill').style.width = '0%';
+    }
+
+    async function captureAndAnalyze() {
+        if (!detecting) return;
+        const video = document.getElementById('videoElement');
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        try {
+            const res = await fetch('/api/process_frame', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: canvas.toDataURL('image/jpeg', 0.8) })
+            });
+            updateUI(await res.json());
+        } catch(e) { console.error(e); }
+    }
+
+    function updateUI(data) {
+        const emo = data.current_emotion;
+        if (emo && emo !== 'No Face') {
+            document.getElementById('currentEmotion').textContent = emo;
+            document.getElementById('currentEmoji').textContent = EMOJI_MAP[emo] || '🤔';
+        }
+
+        const overlay = document.getElementById('overlayCanvas');
+        const video = document.getElementById('videoElement');
+        overlay.width = video.videoWidth; overlay.height = video.videoHeight;
+        const ctx = overlay.getContext('2d');
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+        (data.faces || []).forEach(face => {
+            ctx.strokeStyle = '#3a6bc4'; ctx.lineWidth = 2;
+            ctx.strokeRect(face.x, face.y, face.w, face.h);
+            ctx.fillStyle = 'rgba(58,107,196,0.8)';
+            ctx.fillRect(face.x, face.y - 22, face.w, 22);
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 13px Lato';
+            ctx.fillText(face.emotion, face.x + 5, face.y - 6);
+        });
+
+        if (data.stress_level) {
+            document.getElementById('stressMeter').style.borderColor = data.stress_color;
+            document.getElementById('stressLevel').textContent = data.stress_emoji + ' ' + data.stress_level;
+            document.getElementById('stressLevel').style.color = data.stress_color;
+            document.getElementById('stressPct').textContent = `Stress Score: ${data.stress_score}%`;
+            document.getElementById('stressBarFill').style.width = data.stress_score + '%';
+            document.getElementById('stressBarFill').style.background = data.stress_color;
+
+            // Save latest face data and show Save button
+            lastFaceData = {
+                stress_score: data.stress_score,
+                stress_level: data.stress_level,
+                stress_color: data.stress_color,
+                stress_emoji: data.stress_emoji,
+                dominant_emotion: (function() {
+                    // Pick the emotion with highest percentage, ignoring 'No Face'
+                    const pct = data.percentages || {};
+                    const entries = Object.entries(pct).filter(([k]) => k !== 'No Face');
+                    if (entries.length === 0) return '';
+                    return entries.reduce((a, b) => b[1] > a[1] ? b : a)[0];
+                })(),
+                emotion_percentages: data.percentages || {}
+            };
+            document.getElementById('btnSaveProceed').style.display = 'inline-block';
+            // Auto-save to sessionStorage on every frame so data is always fresh
+            sessionStorage.setItem('faceResult', JSON.stringify(lastFaceData));
+        }
+
+        const pct = data.percentages || {};
+        EMOTIONS.forEach(e => {
+            const val = pct[e] || 0;
+            document.getElementById(`pct_${e}`).textContent = val.toFixed(1) + '%';
+            document.getElementById(`bar_${e}`).style.width = val + '%';
+        });
+    }
+
+    function saveAndMoveToAudio() {
+        if (lastFaceData) {
+            sessionStorage.setItem('faceResult', JSON.stringify(lastFaceData));
+        }
+        window.location.href = '/audio';
+    }
+
+    function saveFaceAndProceed() {
+        if (!lastFaceData) { alert('Please start the camera and detect your face first!'); return; }
+        sessionStorage.setItem('faceResult', JSON.stringify(lastFaceData));
+        window.location.href = '/audio';
+    }
+
+    window.onload = () => startCamera();
+</script>
+</body>
+</html>

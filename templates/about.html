@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Stress Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg:#e8e0d5; --card:rgba(255,255,255,0.6); --text:#2a2a2a; --sub:#666; --blue:#3a6bc4; --border:#ddd; --leaf:#4a6a4a; }
+        [data-theme="dark"] { --bg:#1a1a2e; --card:rgba(255,255,255,0.07); --text:#f0ece6; --sub:#aaa; --blue:#6a9be4; --border:#333; --leaf:#6a9a6a; }
+        * { margin:0; padding:0; box-sizing:border-box; transition: background 0.4s, color 0.3s; }
+        body { font-family:'Lato',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+        nav {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:18px 50px; position:sticky; top:0; z-index:100;
+            background:var(--bg); border-bottom:1px solid var(--border);
+        }
+        .logo-circle { width:55px; height:55px; border-radius:50%; border:2px solid var(--leaf); display:flex; align-items:center; justify-content:center; background:var(--card); font-size:22px; }
+        .nav-links { display:flex; gap:25px; align-items:center; }
+        .nav-links a { text-decoration:none; color:var(--text); font-size:14px; transition:color 0.3s; }
+        .nav-links a:hover { color:var(--blue); }
+        .theme-toggle { background:var(--card); border:1.5px solid var(--border); border-radius:20px; padding:5px 12px; cursor:pointer; font-size:15px; color:var(--text); }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--blue) 0%, #5a8ad4 100%);
+            padding: 80px 40px; text-align:center; color:white;
+        }
+        .hero-section h1 { font-family:'Playfair Display',serif; font-size:48px; margin-bottom:16px; }
+        .hero-section p { font-size:18px; opacity:0.9; max-width:600px; margin:0 auto; line-height:1.7; }
+
+        .content { max-width:1000px; margin:0 auto; padding:60px 20px; }
+
+        .section-title {
+            font-family:'Playfair Display',serif; font-size:30px;
+            color:var(--text); margin-bottom:30px; text-align:center;
+        }
+
+        .cards-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-bottom:60px; }
+        .info-card {
+            background:var(--card); border-radius:12px; padding:28px;
+            border:1px solid var(--border); text-align:center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .info-card:hover { transform:translateY(-5px); box-shadow:0 12px 30px rgba(0,0,0,0.1); }
+        .info-card .icon { font-size:40px; margin-bottom:14px; display:block; }
+        .info-card h3 { font-size:16px; font-weight:700; color:var(--text); margin-bottom:10px; }
+        .info-card p { font-size:13px; color:var(--sub); line-height:1.6; }
+
+        .how-it-works { margin-bottom:60px; }
+        .steps { display:flex; gap:0; position:relative; }
+        .steps::before {
+            content:''; position:absolute; top:30px; left:0; right:0;
+            height:2px; background:var(--blue); opacity:0.3; z-index:0;
+        }
+        .step { flex:1; text-align:center; position:relative; z-index:1; }
+        .step-num {
+            width:60px; height:60px; border-radius:50%;
+            background:var(--blue); color:white;
+            display:flex; align-items:center; justify-content:center;
+            font-size:20px; font-weight:700; margin:0 auto 14px;
+            box-shadow:0 4px 15px rgba(58,107,196,0.4);
+        }
+        .step h4 { font-size:14px; font-weight:700; color:var(--text); margin-bottom:6px; }
+        .step p { font-size:12px; color:var(--sub); padding:0 10px; }
+
+        .emotion-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:60px; }
+        .emotion-badge {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:10px; padding:16px; text-align:center;
+        }
+        .emotion-badge .emoji { font-size:28px; display:block; margin-bottom:6px; }
+        .emotion-badge .name { font-size:13px; font-weight:700; color:var(--text); }
+        .emotion-badge .type { font-size:11px; color:var(--sub); margin-top:2px; }
+
+        .tech-stack { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-bottom:60px; }
+        .tech-badge {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:20px; padding:8px 20px;
+            font-size:13px; color:var(--text); font-weight:600;
+        }
+        .tech-badge span { color:var(--blue); }
+
+        .cta-section {
+            text-align:center; padding:50px 30px;
+            background:var(--card); border-radius:16px;
+            border:1px solid var(--border);
+        }
+        .cta-section h2 { font-family:'Playfair Display',serif; font-size:28px; margin-bottom:12px; }
+        .cta-section p { color:var(--sub); margin-bottom:24px; }
+        .btn-cta {
+            padding:14px 40px; background:var(--blue); color:white;
+            border:none; border-radius:6px; font-size:15px;
+            cursor:pointer; font-family:'Lato',sans-serif;
+            text-decoration:none; display:inline-block;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-cta:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(58,107,196,0.4); }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo-circle">🪷</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            
+            
+            <a href="/login">Login</a>
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+        </div>
+    </nav>
+
+    <div class="hero-section">
+        <h1>About This Project</h1>
+        <p>Real-time stress and emotion detection using facial expressions and speech analysis — powered by deep learning.</p>
+    </div>
+
+    <div class="content">
+
+        <!-- Cards -->
+        <h2 class="section-title" style="margin-top:0;">What We Do</h2>
+        <div class="cards-grid">
+            <div class="info-card">
+                <span class="icon">👁️</span>
+                <h3>Face Emotion Detection</h3>
+                <p>Real-time webcam analysis using CNN model trained on FER2013 dataset. Detects 7 core emotions with 82% accuracy.</p>
+            </div>
+            <div class="info-card">
+                <span class="icon">🎤</span>
+                <h3>Speech Emotion Detection</h3>
+                <p>Voice recording analysis using LSTM model trained on RAVDESS dataset. Identifies 8 emotional states from speech patterns.</p>
+            </div>
+            <div class="info-card">
+                <span class="icon">🧠</span>
+                <h3>Stress Analysis</h3>
+                <p>Combines facial and vocal cues to calculate stress score. Provides Low, Medium, or High stress classification.</p>
+            </div>
+        </div>
+
+        <!-- How it works -->
+        <div class="how-it-works">
+            <h2 class="section-title">How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <h4>Login</h4>
+                    <p>Create your account securely</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <h4>Face Scan</h4>
+                    <p>Webcam detects your emotions live</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <h4>Voice Record</h4>
+                    <p>15 sec audio captures speech emotion</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <h4>Analysis</h4>
+                    <p>AI models process both signals</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">5</div>
+                    <h4>Results</h4>
+                    <p>Get your stress level + emotion report</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emotions -->
+        <h2 class="section-title">Detected Emotions</h2>
+        <div class="emotion-grid">
+            <div class="emotion-badge"><span class="emoji">😠</span><div class="name">Angry</div><div class="type">Face + Speech</div></div>
+            <div class="emotion-badge"><span class="emoji">😢</span><div class="name">Sad</div><div class="type">Face + Speech</div></div>
+            <div class="emotion-badge"><span class="emoji">😨</span><div class="name">Fear</div><div class="type">Face + Speech</div></div>
+            <div class="emotion-badge"><span class="emoji">😊</span><div class="name">Happy</div><div class="type">Face + Speech</div></div>
+            <div class="emotion-badge"><span class="emoji">😐</span><div class="name">Neutral</div><div class="type">Face + Speech</div></div>
+            <div class="emotion-badge"><span class="emoji">😲</span><div class="name">Surprise</div><div class="type">Face + Speech</div></div>
+            <div class="emotion-badge"><span class="emoji">🤢</span><div class="name">Disgust</div><div class="type">Face + Speech</div></div>
+            <div class="emotion-badge"><span class="emoji">😌</span><div class="name">Calm</div><div class="type">Speech Only</div></div>
+        </div>
+
+        <!-- Tech Stack -->
+        <h2 class="section-title">Tech Stack</h2>
+        <div class="tech-stack">
+            <div class="tech-badge">🐍 <span>Python</span></div>
+            <div class="tech-badge">🧠 <span>TensorFlow / Keras</span></div>
+            <div class="tech-badge">👁️ <span>OpenCV</span></div>
+            <div class="tech-badge">🎵 <span>Librosa</span></div>
+            <div class="tech-badge">🌐 <span>Flask</span></div>
+            <div class="tech-badge">🗄️ <span>SQLite</span></div>
+            <div class="tech-badge">📊 <span>CNN Model</span></div>
+            <div class="tech-badge">🔄 <span>LSTM Model</span></div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta-section">
+            <h2>Ready to Check Your Stress? 🧘</h2>
+            <p>Login here and start to analyse your stress in real time</p>
+            <a href="/login" class="btn-cta"> Start Analysis</a>
+        </div>
+    </div>
+
+<script>
+    function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    }
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark') { document.documentElement.setAttribute('data-theme','dark'); document.getElementById('themeBtn').textContent='☀️'; }
+</script>
+</body>
+</html>

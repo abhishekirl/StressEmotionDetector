@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combined Result - Stress Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        :root { --bg:#f0ece6; --card:rgba(255,255,255,0.75); --text:#2a2a2a; --sub:#666; --blue:#3a6bc4; --border:#ddd; --bar-bg:#e8e4df; }
+        [data-theme="dark"] { --bg:#1a1a2e; --card:rgba(255,255,255,0.07); --text:#f0ece6; --sub:#aaa; --blue:#6a9be4; --border:rgba(255,255,255,0.15); --bar-bg:rgba(255,255,255,0.1); }
+        * { margin:0; padding:0; box-sizing:border-box; transition:background 0.4s,color 0.3s; }
+        body { font-family:'Lato',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+        /* Nav */
+        nav { display:flex; justify-content:space-between; align-items:center; padding:14px 40px; background:var(--card); border-bottom:1px solid var(--border); backdrop-filter:blur(10px); position:sticky; top:0; z-index:100; }
+        .nav-brand { font-size:18px; font-weight:700; color:var(--blue); text-decoration:none; }
+        .nav-links { display:flex; gap:20px; align-items:center; }
+        .nav-links a { text-decoration:none; color:var(--sub); font-size:13px; transition:color 0.2s; }
+        .nav-links a:hover { color:var(--blue); }
+        .theme-toggle { width:38px; height:21px; border-radius:11px; background:var(--blue); border:none; cursor:pointer; position:relative; }
+        .theme-toggle::after { content:''; position:absolute; width:15px; height:15px; border-radius:50%; background:white; top:3px; left:3px; transition:transform 0.3s; }
+        [data-theme="dark"] .theme-toggle::after { transform:translateX(17px); }
+
+        /* Hero */
+        .hero { text-align:center; padding:36px 20px 20px; }
+        .hero h1 { font-family:'Playfair Display',serif; font-size:34px; font-style:italic; margin-bottom:6px; }
+        .hero p { color:var(--sub); font-size:14px; }
+
+        /* Page */
+        .page { max-width:1100px; margin:0 auto; padding:20px 30px 60px; }
+
+        /* Combined Banner */
+        .combined-banner {
+            border-radius:16px; padding:42px 40px;
+            text-align:center; margin-bottom:32px;
+            border:2px solid; position:relative; overflow:hidden;
+        }
+        .combined-banner::before { content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%); pointer-events:none; }
+        .cb-label { font-size:11px; letter-spacing:3px; text-transform:uppercase; margin-bottom:12px; opacity:0.7; }
+        .cb-emoji { font-size:72px; display:block; margin-bottom:12px; }
+        .cb-level { font-family:'Playfair Display',serif; font-size:44px; font-weight:600; margin-bottom:6px; }
+        .cb-score { font-size:18px; opacity:0.85; margin-bottom:4px; }
+        .cb-method { font-size:12px; opacity:0.6; margin-bottom:18px; }
+        .cb-bar-track { height:10px; background:rgba(255,255,255,0.2); border-radius:5px; margin:0 auto; max-width:400px; overflow:hidden; }
+        .cb-bar-fill { height:100%; border-radius:5px; transition:width 1.2s ease; }
+
+        /* Two Column Cards */
+        .two-col { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px; }
+
+        .detail-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:24px; backdrop-filter:blur(8px); }
+        .detail-card .dc-header { display:flex; align-items:center; gap:12px; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+        .detail-card .dc-header .dc-icon { font-size:28px; }
+        .detail-card .dc-header .dc-title { font-size:15px; font-weight:700; color:var(--text); }
+        .detail-card .dc-header .dc-sub { font-size:12px; color:var(--sub); }
+
+        /* Stress badge inside card */
+        .stress-badge { display:flex; align-items:center; gap:12px; padding:14px; border-radius:10px; margin-bottom:14px; }
+        .stress-badge .sb-emoji { font-size:36px; }
+        .stress-badge .sb-level { font-family:'Playfair Display',serif; font-size:20px; font-weight:600; }
+        .stress-badge .sb-score { font-size:13px; color:var(--sub); }
+        .stress-badge .sb-bar-track { height:5px; background:var(--bar-bg); border-radius:3px; margin-top:6px; overflow:hidden; width:100%; }
+        .stress-badge .sb-bar-fill { height:100%; border-radius:3px; transition:width 1s ease; }
+
+        .dominant-emotion { display:flex; align-items:center; gap:8px; margin-bottom:14px; font-size:13px; color:var(--sub); }
+        .dominant-emotion .de-badge { background:rgba(58,107,196,0.12); color:var(--blue); border-radius:20px; padding:4px 14px; font-size:13px; font-weight:600; }
+
+        /* Emotion bars */
+        .emo-bars-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--sub); margin-bottom:10px; }
+        .emo-bar-item { margin-bottom:8px; }
+        .emo-bar-header { display:flex; justify-content:space-between; font-size:12px; color:var(--text); margin-bottom:3px; }
+        .emo-bar-track { height:5px; background:var(--bar-bg); border-radius:3px; overflow:hidden; }
+        .emo-bar-fill { height:100%; border-radius:3px; transition:width 0.8s ease; }
+
+        /* No data state */
+        .no-data-box { text-align:center; padding:30px 20px; color:var(--sub); }
+        .no-data-box .nd-icon { font-size:32px; margin-bottom:8px; }
+        .no-data-box .nd-text { font-size:14px; margin-bottom:12px; }
+        .nd-link { display:inline-block; padding:8px 20px; background:var(--blue); color:white; border-radius:6px; text-decoration:none; font-size:13px; }
+
+        /* Charts Row */
+        .charts-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-bottom:24px; }
+        .chart-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; backdrop-filter:blur(8px); }
+        .chart-card h3 { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--sub); text-align:center; margin-bottom:16px; }
+        .chart-wrapper { height:200px; position:relative; }
+
+        /* Action Buttons */
+        .action-row { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:24px; }
+        .btn-action { padding:11px 26px; border-radius:6px; font-size:13px; cursor:pointer; font-family:'Lato',sans-serif; text-decoration:none; display:inline-flex; align-items:center; gap:7px; transition:all 0.3s; border:none; }
+        .btn-primary { background:var(--blue); color:white; }
+        .btn-primary:hover { opacity:0.9; transform:translateY(-2px); }
+        .btn-outline { background:transparent; border:1.5px solid var(--border); color:var(--text); }
+        .btn-outline:hover { border-color:var(--blue); color:var(--blue); }
+
+        /* No data alert (full page) */
+        .no-data-alert { background:rgba(255,152,0,0.1); border:1px solid rgba(255,152,0,0.3); border-radius:10px; padding:30px; text-align:center; color:var(--text); }
+
+        @media(max-width:720px){
+            .two-col { grid-template-columns:1fr; }
+            .charts-row { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="nav-brand">🪷 StressDetect</a>
+        <div class="nav-links">
+            <a href="/face">↺ Redo Face</a>
+            <a href="/audio">↺ Redo Speech</a>
+            <a href="/dashboard">Dashboard</a>
+            <button class="theme-toggle" onclick="toggleTheme()"></button>
+        </div>
+    </nav>
+
+    <div class="hero">
+        <h1>Combined Stress Analysis</h1>
+        <p>Face Detection + Speech Detection combined result</p>
+    </div>
+
+    <div class="page" id="pageContent"></div>
+
+<script>
+    // Theme
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    function toggleTheme() {
+        const curr = document.documentElement.getAttribute('data-theme');
+        const next = curr === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+    }
+
+    const faceResult   = JSON.parse(sessionStorage.getItem('faceResult')   || 'null');
+    const speechResult = JSON.parse(sessionStorage.getItem('speechResult') || 'null');
+
+    // Emotion emoji maps
+    const FACE_EMOJI   = { Angry:'😠', Disgust:'🤢', Fear:'😨', Happy:'😊', Sad:'😢', Surprise:'😲', Neutral:'😐' };
+    const SPEECH_EMOJI = { neutral:'😐', calm:'😌', happy:'😊', sad:'😢', angry:'😠', fear:'😨', disgust:'🤢', surprise:'😲' };
+
+    // Bar colors
+    const STRESS_EMOTIONS_FACE   = ['Angry','Fear','Disgust','Sad'];
+    const STRESS_EMOTIONS_SPEECH = ['angry','fear','disgust','sad'];
+
+    function scoreToLevel(score) {
+        score = Math.round(score * 100) / 100;
+        if (score < 30)      return { score, level:'Low Stress',    color:'#4CAF50', emoji:'😌', method:'Face (50%) + Speech (50%) weighted average' };
+        else if (score < 60) return { score, level:'Medium Stress', color:'#FF9800', emoji:'😟', method:'Face (50%) + Speech (50%) weighted average' };
+        else                 return { score, level:'High Stress',   color:'#F44336', emoji:'😰', method:'Face (50%) + Speech (50%) weighted average' };
+    }
+
+    function calcCombined(f, s) {
+        if (f && s) return scoreToLevel((f.stress_score * 0.5) + (s.stress_score * 0.5));
+        if (f)      return { score:f.stress_score, level:f.stress_level, color:f.stress_color, emoji:f.stress_emoji, method:'Face only' };
+        if (s)      return { score:s.stress_score, level:s.stress_level, color:s.stress_color, emoji:s.stress_emoji, method:'Speech only' };
+        return null;
+    }
+
+    const combined = calcCombined(faceResult, speechResult);
+
+    function makeBars(percentages, emojiMap, stressEmotions) {
+        if (!percentages || Object.keys(percentages).length === 0) return '<p style="color:var(--sub);font-size:13px;">No data</p>';
+        return Object.entries(percentages).map(([emo, val]) => {
+            const isStress = stressEmotions.includes(emo);
+            const color = isStress ? '#e05a4e' : '#3a6bc4';
+            const emoji = emojiMap[emo] || '•';
+            return `
+            <div class="emo-bar-item">
+                <div class="emo-bar-header">
+                    <span>${emoji} ${emo.charAt(0).toUpperCase()+emo.slice(1)}</span>
+                    <span>${Number(val).toFixed(1)}%</span>
+                </div>
+                <div class="emo-bar-track">
+                    <div class="emo-bar-fill" style="width:${val}%; background:${color};"></div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function faceCard() {
+        if (!faceResult) return `
+            <div class="detail-card">
+                <div class="dc-header">
+                    <span class="dc-icon">📷</span>
+                    <div><div class="dc-title">Face Detection</div><div class="dc-sub">Data unavailable</div></div>
+                </div>
+                <div class="no-data-box">
+                    <div class="nd-icon">🚫</div>
+                    <div class="nd-text">Face detection not completed</div>
+                    <a href="/face" class="nd-link">←Go back</a>
+                </div>
+            </div>`;
+        const f = faceResult;
+        return `
+            <div class="detail-card">
+                <div class="dc-header">
+                    <span class="dc-icon">📷</span>
+                    <div><div class="dc-title">Face Detection Result</div><div class="dc-sub">Webcam facial analysis</div></div>
+                </div>
+                <div class="stress-badge" style="background:${f.stress_color}18;">
+                    <span class="sb-emoji">${f.stress_emoji}</span>
+                    <div style="flex:1;">
+                        <div class="sb-level" style="color:${f.stress_color}">${f.stress_level}</div>
+                        <div class="sb-score">Score: ${f.stress_score}%</div>
+                        <div class="sb-bar-track"><div class="sb-bar-fill" style="width:${f.stress_score}%; background:${f.stress_color};"></div></div>
+                    </div>
+                </div>
+                <div class="dominant-emotion">
+                    Dominant Emotion: <span class="de-badge">${FACE_EMOJI[f.dominant_emotion]||''} ${f.dominant_emotion}</span>
+                </div>
+                <div class="emo-bars-title">Emotion Distribution</div>
+                ${makeBars(f.emotion_percentages, FACE_EMOJI, STRESS_EMOTIONS_FACE)}
+            </div>`;
+    }
+
+    function speechCard() {
+        if (!speechResult) return `
+            <div class="detail-card">
+                <div class="dc-header">
+                    <span class="dc-icon">🎤</span>
+                    <div><div class="dc-title">Speech Detection</div><div class="dc-sub">Data unavailable</div></div>
+                </div>
+                <div class="no-data-box">
+                    <div class="nd-icon">🚫</div>
+                    <div class="nd-text">Speech detection not completed</div>
+                    <a href="/audio" class="nd-link">←Go back</a>
+                </div>
+            </div>`;
+        const s = speechResult;
+        return `
+            <div class="detail-card">
+                <div class="dc-header">
+                    <span class="dc-icon">🎤</span>
+                    <div><div class="dc-title">Speech Detection Result</div><div class="dc-sub">Voice recording analysis</div></div>
+                </div>
+                <div class="stress-badge" style="background:${s.stress_color}18;">
+                    <span class="sb-emoji">${s.stress_emoji}</span>
+                    <div style="flex:1;">
+                        <div class="sb-level" style="color:${s.stress_color}">${s.stress_level}</div>
+                        <div class="sb-score">Score: ${s.stress_score}%</div>
+                        <div class="sb-bar-track"><div class="sb-bar-fill" style="width:${s.stress_score}%; background:${s.stress_color};"></div></div>
+                    </div>
+                </div>
+                <div class="dominant-emotion">
+                    Dominant Emotion: <span class="de-badge">${SPEECH_EMOJI[s.dominant_emotion]||''} ${s.dominant_emotion ? s.dominant_emotion.charAt(0).toUpperCase()+s.dominant_emotion.slice(1) : '—'}</span>
+                </div>
+                <div class="emo-bars-title">Emotion Distribution</div>
+                ${makeBars(s.emotion_percentages, SPEECH_EMOJI, STRESS_EMOTIONS_SPEECH)}
+            </div>`;
+    }
+
+    function render() {
+        const page = document.getElementById('pageContent');
+
+        if (!faceResult && !speechResult) {
+            page.innerHTML = `
+                <div class="no-data-alert">
+                    <p style="font-size:20px;margin-bottom:10px;">No data found</p>
+                    <p>Please complete Face Detection first, then Speech Detection.</p>
+                    <a href="/face" style="display:inline-block;margin-top:16px;padding:11px 30px;background:#3a6bc4;color:white;border-radius:6px;text-decoration:none;">Start Face Detection →</a>
+                </div>`;
+            return;
+        }
+
+        let html = '';
+
+        // Combined Banner
+        if (combined) {
+            html += `
+            <div class="combined-banner" style="background:${combined.color}18; border-color:${combined.color};">
+                <div class="cb-label">Combined Stress Result</div>
+                <span class="cb-emoji">${combined.emoji}</span>
+                <div class="cb-level" style="color:${combined.color}">${combined.level}</div>
+                <div class="cb-score" style="color:var(--text)">Combined Stress Score: <strong>${combined.score}%</strong></div>
+                <div class="cb-method" style="color:var(--sub)">${combined.method}</div>
+                <div class="cb-bar-track">
+                    <div class="cb-bar-fill" id="cbBarFill" style="width:0%; background:${combined.color}"></div>
+                </div>
+            </div>`;
+        }
+
+        // Face + Speech detail cards
+        html += `<div class="two-col">${faceCard()}${speechCard()}</div>`;
+
+        // Charts Row
+        html += `
+        <div class="charts-row">
+            <div class="chart-card">
+                <h3>Stress Comparison</h3>
+                <div class="chart-wrapper"><canvas id="stressCompChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Face Emotion %</h3>
+                <div class="chart-wrapper"><canvas id="faceEmoChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Speech Emotion %</h3>
+                <div class="chart-wrapper"><canvas id="speechEmoChart"></canvas></div>
+            </div>
+        </div>`;
+
+        // Action Buttons
+        html += `
+        <div class="action-row">
+            <a href="/face"      class="btn-action btn-outline">🔄 Redo Face Detection</a>
+            <a href="/audio"     class="btn-action btn-outline">🎤 Redo Speech</a>
+            <a href="/dashboard" class="btn-action btn-primary">📊 Go to Dashboard</a>
+            <a href="/history"   class="btn-action btn-primary">📋 View History</a>
+        </div>`;
+
+        page.innerHTML = html;
+
+        // Animate combined bar
+        setTimeout(() => {
+            const bar = document.getElementById('cbBarFill');
+            if (bar && combined) bar.style.width = combined.score + '%';
+        }, 100);
+
+        renderCharts();
+        saveCombinedSession();
+    }
+
+    function renderCharts() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDark ? '#e8e0d5' : '#3a3a3a';
+        const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+
+        // ── Stress Comparison Bar Chart ──
+        const compLabels = [];
+        const compData   = [];
+        const compColors = [];
+        if (faceResult) {
+            compLabels.push('Face');
+            compData.push(faceResult.stress_score);
+            compColors.push(faceResult.stress_color || '#3a6bc4');
+        }
+        if (speechResult) {
+            compLabels.push('Speech');
+            compData.push(speechResult.stress_score);
+            compColors.push(speechResult.stress_color || '#FF9800');
+        }
+        if (combined && faceResult && speechResult) {
+            compLabels.push('Combined');
+            compData.push(combined.score);
+            compColors.push(combined.color);
+        }
+        new Chart(document.getElementById('stressCompChart'), {
+            type: 'bar',
+            data: {
+                labels: compLabels,
+                datasets: [{ data: compData, backgroundColor: compColors, borderRadius: 6, borderSkipped: false }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { min:0, max:100, ticks: { color: textColor }, grid: { color: gridColor } },
+                    x: { ticks: { color: textColor }, grid: { display: false } }
+                }
+            }
+        });
+
+        // ── Face Emotion Donut ──
+        const fCtx = document.getElementById('faceEmoChart');
+        if (faceResult && faceResult.emotion_percentages && Object.keys(faceResult.emotion_percentages).length > 0) {
+            const fp = faceResult.emotion_percentages;
+            const fLabels = Object.keys(fp);
+            const fData   = Object.values(fp);
+            const fColors = ['#9E9E9E','#2196F3','#4CAF50','#03A9F4','#F44336','#9C27B0','#FF9800'];
+            new Chart(fCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: fLabels.map(l => l.charAt(0).toUpperCase()+l.slice(1)),
+                    datasets: [{ data: fData, backgroundColor: fColors.slice(0, fLabels.length), borderWidth: 0 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position:'bottom', labels: { color: textColor, font: { size:10 }, boxWidth: 12 } } },
+                    cutout: '60%'
+                }
+            });
+        } else {
+            fCtx.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--sub);font-size:13px;">No face data</div>';
+        }
+
+        // ── Speech Emotion Donut ──
+        const sCtx = document.getElementById('speechEmoChart');
+        if (speechResult && speechResult.emotion_percentages && Object.keys(speechResult.emotion_percentages).length > 0) {
+            const sp = speechResult.emotion_percentages;
+            const sLabels = Object.keys(sp);
+            const sData   = Object.values(sp);
+            const sColors = ['#9E9E9E','#4CAF50','#FFC107','#2196F3','#F44336','#673AB7','#FF5722','#00BCD4'];
+            new Chart(sCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: sLabels.map(l => l.charAt(0).toUpperCase()+l.slice(1)),
+                    datasets: [{ data: sData, backgroundColor: sColors.slice(0, sLabels.length), borderWidth: 0 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position:'bottom', labels: { color: textColor, font: { size:10 }, boxWidth: 12 } } },
+                    cutout: '60%'
+                }
+            });
+        } else {
+            sCtx.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--sub);font-size:13px;">No speech data</div>';
+        }
+    }
+
+    async function saveCombinedSession() {
+        if (!combined) return;
+        try {
+            await fetch('/api/save_combined_session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    face_stress_score:   faceResult   ? faceResult.stress_score    : null,
+                    face_stress_level:   faceResult   ? faceResult.stress_level    : null,
+                    face_stress_color:   faceResult   ? faceResult.stress_color    : null,
+                    face_stress_emoji:   faceResult   ? faceResult.stress_emoji    : null,
+                    face_emotion:        faceResult   ? faceResult.dominant_emotion : null,
+                    speech_stress_score: speechResult ? speechResult.stress_score   : null,
+                    speech_stress_level: speechResult ? speechResult.stress_level   : null,
+                    speech_stress_color: speechResult ? speechResult.stress_color   : null,
+                    speech_stress_emoji: speechResult ? speechResult.stress_emoji   : null,
+                    speech_emotion:      speechResult ? speechResult.dominant_emotion : null,
+                    combined_score:      combined.score,
+                    combined_level:      combined.level
+                })
+            });
+        } catch(e) { console.log('Save error:', e); }
+    }
+
+    render();
+
+    // Re-render charts on theme toggle so colors update
+    const origToggle = window.toggleTheme;
+    window.toggleTheme = function() {
+        const curr = document.documentElement.getAttribute('data-theme');
+        const next = curr === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+    };
+</script>
+</body>
+</html>
